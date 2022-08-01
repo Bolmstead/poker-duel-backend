@@ -4,30 +4,35 @@ const app = require("./app");
 
 const { PORT } = require("./config");
 
-const server = require("http").createServer(app);
+const { Server } = require("socket.io");
 
 const cors = require("cors");
-const corsOptions = {
-  origin: "http://localhost:3000",
-  credentials: true, //access-control-allow-credentials:true
-  optionSuccessStatus: 200,
-};
-app.use(cors(corsOptions));
 
-const io = require("socket.io")(server, {
+app.use(cors());
+
+const server = require("http").createServer(app);
+
+const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3001",
-    methods: ["GET", "POST"],
+    origin: "http://localhost:3000",
+    credentials: true, //access-control-allow-credentials:true
+    optionSuccessStatus: 200,
   },
 });
 
 io.on("connection", (socket) => {
-  console.log("connection!!!!!!");
+  console.log("connection!!!!!!", socket.id);
   socket.emit("connection made", () => {
     console.log("sent connection made");
   });
-  socket.on("game start", () => {
+  socket.on("game start", (data) => {
     console.log("game start");
+    socket.broadcast.emit("game started", data);
+  });
+
+  socket.on("card played", (data) => {
+    console.log("card played");
+    socket.broadcast.emit("card played", data);
   });
   socket.on("player joined", () => {
     console.log("player joined");
