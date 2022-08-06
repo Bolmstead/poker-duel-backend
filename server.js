@@ -20,11 +20,8 @@ const io = new Server(server, {
   },
 });
 
-io.on("connection", (socket) => {
+io.sockets.on("connection", (socket) => {
   console.log("connection!!!!!!", io.sockets.adapter.rooms);
-  socket.emit("connection made", () => {
-    console.log("sent connection made");
-  });
   socket.on("join room", (username) => {
     console.log("join room", username);
 
@@ -34,7 +31,6 @@ io.on("connection", (socket) => {
       roomArray
     );
     let anyGamesBeingPlayed = false;
-    let anyGamesOpen = false;
     let userJoinedGame = false;
     for (let rm of io.sockets.adapter.rooms) {
       if (typeof rm[0] !== "string") {
@@ -42,20 +38,37 @@ io.on("connection", (socket) => {
         continue;
       }
       let isActualGame = rm[0].substring(0, 5) === "game:";
-      console.log(
-        "🚀 ~ file: server.js ~ line 43 ~ socket.on ~ isActualGame",
-        isActualGame
-      );
+
       if (isActualGame) {
         anyGamesBeingPlayed = true;
+        console.log("rm!!!", rm);
         if (rm[1].size === 1) {
           console.log("set size of 1");
-          socket.join(rm);
+          socket.join(rm, (err) => {
+            if (err) {
+              // do something here if the join fails
+              console.log("err", err);
+            } else {
+            }
+            // call this only after the join has completed
+          });
+          // socket.in(rm[0]).emit("player_joined", { username, roomName: rm[0] });
+          console.log("rm[0]", rm[0]);
+          io.sockets
+            .in(rm[0])
+            .emit("other_player_joined", { roomName: rm[0], username });
+
           userJoinedGame = true;
+
           break;
         }
       }
     }
+    console.log("Rooms Before: ", io.sockets.adapter.rooms);
+
+    console.log("anyGamesBeingPlayed", anyGamesBeingPlayed);
+    console.log("userJoinedGame", userJoinedGame);
+
     if (!anyGamesBeingPlayed && !userJoinedGame) {
       let randomNum = Math.floor(Math.random() * 10000);
       console.log(
@@ -63,7 +76,7 @@ io.on("connection", (socket) => {
         randomNum
       );
       socket.join(`game: ${username}${randomNum}`);
-    } else if (!anyGamesOpen && !userJoinedGame) {
+    } else if (!userJoinedGame) {
       let randomNum = Math.floor(Math.random() * 10000);
       console.log(
         "🚀 ~ file: server.js ~ line 61 ~ socket.on ~ randomNum",
@@ -72,25 +85,23 @@ io.on("connection", (socket) => {
 
       socket.join(`game: ${username}${randomNum}`);
     }
-    console.log("io.sockets.adapter.rooms", io.sockets.adapter.rooms);
+    console.log("Rooms After: ", io.sockets.adapter.rooms);
   });
   socket.on("game start", (data) => {
-    console.log("game start");
-    socket.to(data.room).emit("game started", data);
+    console.log("game start", data);
+    io.sockets.in(data.roomName).emit("game started", data);
   });
 
   socket.on("card played", (data) => {
-    console.log("card played");
-    socket.broadcast.emit("card played", data);
-  });
-  socket.on("player joined", () => {
-    console.log("player joined");
+    console.log("card played", data);
+    io.sockets.in(data.room).emit("user card played", data);
   });
   socket.on("disconnect", () => {
     console.log("user disconnected");
   });
-  socket.on("placed card", () => {
-    console.log("user placed card");
+  socket.on("finish game", (data) => {
+    io.sockets.in(data.roomName).emit("game finished", data);
+    console.log("finish game!!!");
   });
 });
 
