@@ -68,21 +68,14 @@ io.sockets.on("connection", (socket) => {
 
     console.log("anyGamesBeingPlayed", anyGamesBeingPlayed);
     console.log("userJoinedGame", userJoinedGame);
+    let randomNum = Math.floor(Math.random() * 10000);
 
     if (!anyGamesBeingPlayed && !userJoinedGame) {
-      let randomNum = Math.floor(Math.random() * 10000);
-      console.log(
-        "🚀 ~ file: server.js ~ line 61 ~ socket.on ~ randomNum",
-        randomNum
-      );
+      console.log("socket.id", socket.id);
+
       socket.join(`game: ${username}${randomNum}`);
     } else if (!userJoinedGame) {
-      let randomNum = Math.floor(Math.random() * 10000);
-      console.log(
-        "🚀 ~ file: server.js ~ line 61 ~ socket.on ~ randomNum",
-        randomNum
-      );
-
+      console.log("socket.id", socket.id);
       socket.join(`game: ${username}${randomNum}`);
     }
     console.log("Rooms After: ", io.sockets.adapter.rooms);
@@ -96,8 +89,48 @@ io.sockets.on("connection", (socket) => {
     console.log("card played", data);
     io.sockets.in(data.room).emit("user card played", data);
   });
-  socket.on("disconnect", () => {
+
+  socket.on("disconnecting", (reason) => {
+    console.log("❌socket.rooms,", socket.rooms);
+    console.log("❌ooms After: ", io.sockets.adapter.rooms);
+
+    for (let rm of io.sockets.adapter.rooms) {
+      if (typeof rm[0] !== "string") {
+        console.log("NOT STRING");
+        continue;
+      }
+      let isActualGame = rm[0].substring(0, 5) === "game:";
+
+      if (isActualGame) {
+        console.log("rm!!!", rm);
+        if (rm[1].size === 2) {
+          console.log("set size of 2");
+
+          if (rm[1].has(socket.id)) {
+            console.log("room contains user: ", rm[0]);
+            io.sockets.in(rm[0]).emit("user has left", { roomName: rm[0] });
+
+            break;
+          }
+        }
+      }
+    }
+
+    for (const room of socket.rooms) {
+      console.log("room:", room);
+      console.log("socket.id:", socket.id);
+
+      if (room === `game: ${socket.id}`) {
+        console.log("found the game!!!!");
+        socket.to(room).emit("user has left", socket.id);
+      }
+    }
+
+    console.log("❌Rooms After: ", io.sockets.adapter.rooms);
+  });
+  socket.on("disconnect", (reason) => {
     console.log("user disconnected");
+    console.log(reason);
   });
   socket.on("finish game", (data) => {
     io.sockets.in(data.roomName).emit("game finished", data);
