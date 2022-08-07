@@ -13,7 +13,9 @@ const app = express();
 
 
 
-app.use(cors());
+app.use(cors({
+  origin: "https://olmstead-ball-backend.herokuapp.com/"
+}));
 app.use(express.json());
 app.use(morgan("tiny"));
 
