@@ -14,7 +14,7 @@ const app = express();
 
 
 app.use(cors({
-  origin: "https://olmstead-ball-backend.herokuapp.com/"
+  origin: "https://olmstead-ball.netlify.app"
 }));
 app.use(express.json());
 app.use(morgan("tiny"));
