@@ -12,12 +12,22 @@ app.use(cors());
 
 const server = require("http").createServer(app);
 
+var whitelist = ["https://olmstead-ball.netlify.app", "http://localhost:3000"];
+var corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true, //access-control-allow-credentials:true
+  optionSuccessStatus: 200,
+};
+
 const io = new Server(server, {
   cors: {
-    origin: "https://olmstead-ball.netlify.app",
-    credentials: true, //access-control-allow-credentials:true
-    optionSuccessStatus: 200,
-    
+    corsOptions,
   },
 });
 
