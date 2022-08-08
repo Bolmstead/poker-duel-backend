@@ -103,7 +103,7 @@ io.sockets.on("connection", (socket) => {
 
   socket.on("disconnecting", (reason) => {
     console.log("❌socket.rooms,", socket.rooms);
-    console.log("❌ooms After: ", io.sockets.adapter.rooms);
+    console.log("❌ooms Before: ", io.sockets.adapter.rooms);
 
     for (let rm of io.sockets.adapter.rooms) {
       if (typeof rm[0] !== "string") {
@@ -120,7 +120,8 @@ io.sockets.on("connection", (socket) => {
           if (rm[1].has(socket.id)) {
             console.log("room contains user: ", rm[0]);
             io.sockets.in(rm[0]).emit("user has left", { roomName: rm[0] });
-
+            console.log("io.sockets",io.sockets)
+            io.sockets.in(rm[0]).socketsLeave(rm[0])
             break;
           }
         }
@@ -142,6 +143,8 @@ io.sockets.on("connection", (socket) => {
   socket.on("disconnect", (reason) => {
     console.log("user disconnected");
     console.log(reason);
+    console.log("❌Rooms After: ", io.sockets.adapter.rooms);
+
   });
   socket.on("finish game", (data) => {
     io.sockets.in(data.roomName).emit("game finished", data);
