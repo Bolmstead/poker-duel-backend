@@ -147,6 +147,10 @@ io.sockets.on("connection", (socket) => {
     io.sockets.in(data.roomName).emit("game finished", data);
     console.log("finish game!!!");
   });
+  socket.on("rematch requested", (data) => {
+    io.sockets.in(data.roomName).emit("rematch requested", data);
+    console.log("rematch requested!!!");
+  });
 });
 
 server.listen(PORT, function () {
