@@ -1,11 +1,13 @@
 /** Routes for users. */
 const express = require("express");
-const User = require("../models/UserModel");
+const User = require("../models/user.model");
+const Game = require("../models/game.model");
+
 
 const router = express.Router();
 
 // route called to grab user's information
-router.get("/", async function (req, res, next) {
+router.post("/login", async function (req, res, next) {
   try {
     console.log("🐢🐢🐢🐢🐢🐢🐢🐢 SUCCESSFUL API CALL!!!!!!");
 
@@ -16,16 +18,11 @@ router.get("/", async function (req, res, next) {
 });
 
 // route called to grab user's information
-router.get("/:username", async function (req, res, next) {
+router.get("/register", async function (req, res, next) {
   try {
-    let { username } = req.params;
-    if (username) {
-      console.log(username);
+    console.log("req.body", req.body);
 
-      return res.json(username);
-    } else {
-      return res.json("no user");
-    }
+    return res.json(username);
   } catch (err) {
     return next(err);
   }
