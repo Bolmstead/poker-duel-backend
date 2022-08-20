@@ -25,7 +25,6 @@ exports.connect = () => {
     keepAlive: 1,
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    useFindAndModify: false,
   });
   return mongoose.connection;
 };

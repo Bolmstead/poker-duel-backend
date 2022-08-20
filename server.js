@@ -4,36 +4,51 @@ require("dotenv").config();
 
 console.log("process.env", process.env);
 
-const app = require("./app");
-
+const express = require("express");
+const connectDB = require("./config/db");
+const usersRoutes = require("./routes/usersRoutes");
+const path = require("path");
+const mongoose = require("mongoose");
 const { PORT } = require("./config");
 
-const { Server } = require("socket.io");
-const mongoose = require('mongoose');
+connectDB();
+const app = express();
 
 const cors = require("cors");
-
-app.use(cors());
-
-const server = require("http").createServer(app);
-
-var whitelist = ["https://olmstead-ball.netlify.app", "http://localhost:3000"];
-var corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+const corsOptions = {
+  origin: "http://localhost:3001",
   credentials: true, //access-control-allow-credentials:true
   optionSuccessStatus: 200,
 };
+app.use(cors(corsOptions));
 
-const io = new Server(server, {
-  cors: {
-    corsOptions,
-  },
+app.use("/users", usersRoutes);
+
+/** Handle 404 errors */
+app.use(function (req, res, next) {
+  return next(new NotFoundError());
+});
+
+/** Generic error handler; anything unhandled goes here. */
+app.use(function (err, req, res, next) {
+  if (process.env.NODE_ENV !== "test") console.error(err.stack);
+  const status = err.status || 500;
+  const message = err.message;
+
+  return res.status(status).json({
+    error: { message, status },
+  });
+});
+
+
+const server = app.listen(
+  PORT,
+  console.log(`Server running on PORT ${PORT}...`.yellow.bold)
+);
+
+const io = require("socket.io")(server, {
+  pingTimeout: 60000,
+  cors: corsOptions,
 });
 
 io.sockets.on("connection", (socket) => {
@@ -157,14 +172,6 @@ io.sockets.on("connection", (socket) => {
   socket.on("rematch requested", (data) => {
     io.sockets.in(data.roomName).emit("rematch requested", data);
     console.log("rematch requested!!!");
-  });
-});
-
-mongoose.connect(process.env.MONGO_URI, {
-
-}).then(() => {
-  server.listen(PORT, function () {
-    console.log(`Started on http://localhost:${PORT}`);
   });
 });
 

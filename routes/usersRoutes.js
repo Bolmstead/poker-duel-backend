@@ -28,4 +28,14 @@ router.get("/register", async function (req, res, next) {
   }
 });
 
+router.get("/test", async function (req, res, next) {
+  try {
+    console.log("made it to test route! 🪅🎊🎉🧸💥" );
+
+    return res.json("success test call!");
+  } catch (err) {
+    return next(err);
+  }
+});
+
 module.exports = router;
